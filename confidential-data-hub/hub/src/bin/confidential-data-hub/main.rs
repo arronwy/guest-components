@@ -17,6 +17,7 @@ use tokio::{
 use ttrpc::r#async::Server as TtrpcServer;
 
 use crate::api_ttrpc::create_get_resource_service;
+use crate::api_ttrpc::create_secure_mount_service;
 
 mod api;
 mod api_ttrpc;
@@ -57,11 +58,13 @@ async fn main() -> Result<()> {
 
     let sealed_secret_service = ttrpc_service!(create_sealed_secret_service);
     let get_resource_service = ttrpc_service!(create_get_resource_service);
+    let secure_mount_service = ttrpc_service!(create_secure_mount_service);
     let mut server = TtrpcServer::new()
         .bind(&cli.socket)
         .context("cannot bind cdh ttrpc service")?
         .register_service(sealed_secret_service)
-        .register_service(get_resource_service);
+        .register_service(get_resource_service)
+        .register_service(secure_mount_service);
 
     server.start().await?;
 

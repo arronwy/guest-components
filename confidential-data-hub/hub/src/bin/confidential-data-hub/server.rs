@@ -10,12 +10,16 @@ use async_trait::async_trait;
 use confidential_data_hub::{hub::Hub, DataHub};
 use lazy_static::lazy_static;
 use log::debug;
+use storage::volume_type::Storage;
 use tokio::sync::RwLock;
 use ttrpc::{asynchronous::TtrpcContext, Code, Error, Status};
 
 use crate::{
-    api::{GetResourceRequest, GetResourceResponse, UnsealSecretInput, UnsealSecretOutput},
-    api_ttrpc::{GetResourceService, SealedSecretService},
+    api::{
+        GetResourceRequest, GetResourceResponse, SecureMountRequest, SecureMountResponse,
+        UnsealSecretInput, UnsealSecretOutput,
+    },
+    api_ttrpc::{GetResourceService, SealedSecretService, SecureMountService},
 };
 
 lazy_static! {
@@ -84,6 +88,38 @@ impl GetResourceService for Server {
 
         let mut reply = GetResourceResponse::new();
         reply.Resource = resource;
+        debug!("send back the resource");
+        Ok(reply)
+    }
+}
+
+#[async_trait]
+impl SecureMountService for Server {
+    async fn secure_mount(
+        &self,
+        _ctx: &TtrpcContext,
+        req: SecureMountRequest,
+    ) -> ::ttrpc::Result<SecureMountResponse> {
+        debug!("get new Secure mount request");
+        let reader = HUB.read().await;
+        let reader = reader.as_ref().expect("must be initialized");
+        let storage = Storage {
+            driver: req.driver,
+            driver_options: req.driver_options,
+            source: req.source,
+            fstype: req.fstype,
+            options: req.options,
+            mount_point: req.mount_point,
+        };
+        let resource = reader.secure_mount(storage).await.map_err(|e| {
+            let mut status = Status::new();
+            status.set_code(Code::INTERNAL);
+            status.set_message(format!("[CDH] [ERROR]: secure mount failed: {e}"));
+            Error::RpcStatus(status)
+        })?;
+
+        let mut reply = SecureMountResponse::new();
+        reply.mountPath = resource;
         debug!("send back the resource");
         Ok(reply)
     }

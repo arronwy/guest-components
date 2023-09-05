@@ -15,6 +15,7 @@ members = [
     "confidential-data-hub/hub",
     "confidential-data-hub/kms",
     "confidential-data-hub/secret",
+    "confidential-data-hub/storage",
     "image-rs",
     "ocicrypt-rs",
 ]
