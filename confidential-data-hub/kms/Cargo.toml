@@ -26,7 +26,7 @@ serde.workspace = true
 serde_json.workspace = true
 sev = { path = "../../attestation-agent/deps/sev", optional = true }
 strum.workspace = true
-reqwest = { version = "0.11", optional = true }
+reqwest = { version = "0.11", features = ["rustls-tls"], optional = true }
 thiserror.workspace = true
 tokio = { workspace = true, features = ["fs"] }
 toml.workspace = true
