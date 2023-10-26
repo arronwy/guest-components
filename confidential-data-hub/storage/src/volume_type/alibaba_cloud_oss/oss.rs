@@ -7,6 +7,7 @@ use base64::{engine::general_purpose::STANDARD, Engine};
 use secret::secret::Secret;
 use serde::{Deserialize, Serialize};
 use std::fs::File;
+use std::fs;
 use std::io::Write;
 use std::os::unix::fs::PermissionsExt;
 use std::process::Command;
@@ -114,6 +115,8 @@ impl Oss {
             .map(str::to_string)
             .collect();
         let s = if self.encrypted == "gocryptfs" {
+            fs::create_dir_all("/tmp/oss")
+                .map_err(|e| Error::FileError(format!("create dir failed: {e}")))?;
             "/tmp/oss/".to_string()
         } else {
             source.clone()
